@@ -36,12 +36,14 @@ class AppUiTest {
         val avatar = compose.onNodeWithContentDescription("Select John Doe").fetchSemanticsNode().boundsInRoot
         val badge = compose.onNodeWithTag("addBadge").fetchSemanticsNode().boundsInRoot
         assertTrue(badge.center.x > avatar.center.x && badge.top < avatar.top)
+        assertTrue(!badge.contains(avatar.center))
         compose.onNodeWithContentDescription("Add relative").performClick()
-        listOf("Add Parent", "Add Child", "Add Sibling", "Add Partner").forEach { compose.onNodeWithText(it).assertIsDisplayed() }
+        val actions = listOf("Add Parent", "Add Child", "Add Sibling", "Add Partner")
+        actions.forEach { compose.onNodeWithText(it).assertIsDisplayed() }
         compose.onNodeWithText("Add Child").performClick()
         compose.onNodeWithText("Cancel").performClick()
-        compose.onNodeWithText("Find Others").performClick()
-        compose.onNodeWithText("PEOPLE YOU MAY KNOW").assertIsDisplayed()
+        compose.onNodeWithText("Sharing").performClick()
+        compose.onNodeWithText("Receive a tree").assertExists()
         compose.onNodeWithText("Settings").performClick()
         compose.onNodeWithText("Account Profile").assertIsDisplayed()
     }
@@ -62,16 +64,20 @@ class AppUiTest {
         compose.onNodeWithContentDescription("Select Alex Doe").assertExists()
         compose.onNodeWithText("12 people · 4 generations · Private").assertExists()
     }
-    @Test fun connectUsesExplicitRelationshipAndSearchFilters() {
-        compose.onNodeWithText("Find Others").performClick()
-        compose.onNode(hasSetTextAction()).performTextInput("Sarah")
-        compose.onNodeWithText("Michael Doe").assertDoesNotExist()
-        compose.onNodeWithText("Connect").performClick()
-        compose.onNodeWithText("Choose their relationship to John Doe.").assertExists()
-        compose.onNodeWithText("Add to tree").performClick()
-        compose.onNodeWithText("Connected").assertExists()
+    @Test fun sharingReplacesDiscoveryAndLogsTrackLocalChanges() {
+        compose.onNodeWithText("Find Others").assertDoesNotExist()
+        compose.onNodeWithText("Sharing").performClick()
+        compose.onNodeWithText("Share your tree").assertExists()
+        compose.onNodeWithText("Scan QR").assertExists()
+        compose.onNodeWithText("Logs").performClick()
+        compose.onNodeWithText("No changes yet. Add a relative or import a tree to start your history.").assertExists()
         compose.onNodeWithText("My Tree").performClick()
-        compose.onNodeWithContentDescription("Select Sarah Doe").assertExists()
+        compose.onNodeWithContentDescription("Add relative").performClick()
+        compose.onNodeWithText("Add Child").performClick()
+        compose.onNodeWithText("Name").performTextInput("Logged child")
+        compose.onNodeWithText("Add relative").performClick()
+        compose.onNodeWithText("Logs").performClick()
+        compose.onNodeWithText("• Added Logged child").assertExists()
     }
     @Test fun settingsSaveAndLogoutResumeKeepTree() {
         compose.onNodeWithText("Settings").performClick()

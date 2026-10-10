@@ -5,3 +5,10 @@ local.properties
 .idea/
 *.iml
 .android-sdk/
+app/google-services.json
+.firebase/
+firebase/.firebaserc
+firebase/node_modules/
+.tools/
+pr-body.md
+firebase/*-debug.log

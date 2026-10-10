@@ -37,9 +37,10 @@ import kotlin.math.roundToInt
 
 data class GraphViewport(val zoom: Float = 1f, val pan: Offset = Offset.Zero)
 
-@Composable fun TreeScreen(state: TreeViewState, viewport: GraphViewport, onTransform: (Offset, Float) -> Unit, onFit: () -> Unit, onSelect: (String) -> Unit, onMenu: () -> Unit, onDismiss: () -> Unit, onAdd: (RelationshipType) -> Unit, onEdit: (String, String, String) -> Unit, onSave: () -> Unit, onRetry: () -> Unit) {
+@Composable fun TreeScreen(state: TreeViewState, viewport: GraphViewport, onTransform: (Offset, Float) -> Unit, onFit: () -> Unit, onSelect: (String) -> Unit, onMenu: () -> Unit, onDismiss: () -> Unit, onAdd: (RelationshipType) -> Unit, onEdit: (String, String, String) -> Unit, onSave: () -> Unit, onRetry: () -> Unit, onDelete: () -> Unit, onConfirmDelete: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         PageHeading("Our living tree", "THE DOE FAMILY", state.subtitle)
+        if (state.graph.nodes.any { it.person.id == state.selectedNodeId && !it.person.isCurrentUser }) TextButton(onClick = onDelete, modifier = Modifier.padding(start = 16.dp)) { Text("Remove selected relative") }
         ErrorMessage(state.error, onRetry)
         if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clipToBounds().testTag("treeGraph")) {
@@ -87,7 +88,7 @@ data class GraphViewport(val zoom: Float = 1f, val pan: Offset = Offset.Zero)
                             Avatar(node.person, Modifier.size(avatarSize.dp).then(if (selected) Modifier.border(2.dp, Espresso, CircleShape) else Modifier))
                         }
                         if (selected) {
-                            Box(Modifier.align(Alignment.TopEnd).offset(x = 14.dp, y = (-14).dp)) {
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 26.dp, y = (-26).dp)) {
                                 Box(Modifier.size(48.dp).testTag("addBadge").clickable(onClick = onMenu).semantics { contentDescription = "Add relative" }, contentAlignment = Alignment.Center) {
                                     Surface(Modifier.size(28.dp), shape = CircleShape, color = Color.White, shadowElevation = 2.dp) { Icon(Icons.Outlined.Add, null, Modifier.padding(4.dp), tint = Espresso) }
                                 }
@@ -104,4 +105,9 @@ data class GraphViewport(val zoom: Float = 1f, val pan: Offset = Offset.Zero)
         }
     }
     state.form?.let { RelationDialog(it, onEdit, onSave, onDismiss) }
+    state.deleteNodeId?.let { id -> AlertDialog(onDismissRequest = onDismiss,
+        title = { Text("Remove relative?") },
+        text = { Text("Remove ${state.graph.nodes.firstOrNull { it.person.id == id }?.person?.name.orEmpty()} and their relationship links? Other relatives stay. This will be recorded in Logs and shared with linked trees for review.") },
+        confirmButton = { Button(onClick = onConfirmDelete, enabled = !state.deleting) { Text("Remove") } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !state.deleting) { Text("Cancel") } }) }
 }

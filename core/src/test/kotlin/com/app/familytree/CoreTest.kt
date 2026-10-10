@@ -3,7 +3,6 @@ package com.app.familytree
 import com.app.familytree.core.data.*
 import com.app.familytree.core.model.*
 import com.app.familytree.feature.tree.*
-import com.app.familytree.feature.findothers.*
 import com.app.familytree.feature.settings.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
@@ -62,24 +61,9 @@ class CoreTest {
         val storage = MemoryStorage("{bad json"); val repo = LocalFamilyRepository(storage); repo.load()
         assertNull(repo.state.value.data); assertNotNull(repo.state.value.error); assertEquals("{bad json", storage.value)
         storage.value = null; repo.load()
-        storage.value = storage.value!!.replace("\"version\":1", "\"version\":99")
+        storage.value = storage.value!!.replace("\"version\":2", "\"version\":99")
         val raw = storage.value; val future = LocalFamilyRepository(storage); future.load()
         assertNull(future.state.value.data); assertEquals(raw, storage.value)
-    }
-    @Test fun searchConnectCancelAndDuplicatePrevention() = runTest {
-        val repo = LocalFamilyRepository(MemoryStorage()); repo.load()
-        val vm = FindOthersViewModel(repo, backgroundScope) { "john" }; runCurrent()
-        vm.search("SARAH"); assertEquals(listOf("sarah"), vm.state.value.suggestions.map { it.id })
-        vm.search(" doe-1999 "); assertEquals(3, vm.state.value.suggestions.size)
-        vm.search("absent"); assertTrue(vm.state.value.suggestions.isEmpty())
-        val sarah = DemoData.suggestions.first()
-        vm.connect(sarah); vm.dismiss(); assertFalse("sarah" in repo.state.value.data!!.connectedUserIds)
-        vm.connect(sarah); vm.choose(RelationshipType.SIBLING); vm.save(); runCurrent()
-        assertTrue("sarah" in vm.state.value.connectedUserIds)
-        assertTrue(repo.state.value.data!!.tree.people.any { it.id == "sarah" })
-        val before = repo.state.value.data
-        vm.connect(sarah); vm.save(); runCurrent()
-        assertNotNull(vm.state.value.form!!.error); assertEquals(before, repo.state.value.data)
     }
     @Test fun treeFormValidationAndSaveAndSettingsSession() = runTest {
         val repo = LocalFamilyRepository(MemoryStorage()); repo.load()
