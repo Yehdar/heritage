@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Heritage · Shared tree</title>
+<style>body{background:#f4ebe1;color:#2c221e;font:17px system-ui;max-width:520px;margin:12vh auto;padding:24px}h1{font:42px Georgia}a{display:inline-block;background:#2c221e;color:white;padding:14px 24px;border-radius:28px;text-decoration:none}p{line-height:1.6}</style>
+<h1>A family tree is waiting.</h1><p>Open this link in Heritage to preview the tree, choose how to merge it, and decide whether to follow future changes.</p><a id="open" hidden>Open Heritage</a><p id="help">Install Heritage first, or paste this URL into the app's Sharing tab. The tree is only imported after your confirmation.</p>
+<script>const token=location.pathname.split('/')[2];if(/^[a-f0-9]{32}$/.test(token||'')){const a=document.getElementById('open');a.hidden=false;a.href='heritage://tree/'+token;}else document.getElementById('help').textContent='This sharing link is invalid.';</script>
+</html>

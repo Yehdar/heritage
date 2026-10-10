@@ -15,21 +15,25 @@ import com.app.familytree.AppOwner
 import com.app.familytree.core.theme.*
 import com.app.familytree.core.ui.ErrorMessage
 import com.app.familytree.feature.tree.*
-import com.app.familytree.feature.findothers.*
+import com.app.familytree.feature.sharing.*
+import com.app.familytree.feature.logs.*
+import com.app.familytree.sharing.ShareQr
 import com.app.familytree.feature.settings.*
 
-@Composable fun FamilyTreeApp(owner: AppOwner) {
+@Composable fun FamilyTreeApp(owner: AppOwner, onShare: (String) -> Unit = {}, onScan: () -> Unit = {}) {
     val tree by owner.tree.state.collectAsStateWithLifecycle()
-    val find by owner.find.state.collectAsStateWithLifecycle()
+    val sharing by owner.sharing.state.collectAsStateWithLifecycle()
+    val logs by owner.logs.state.collectAsStateWithLifecycle()
     val settings by owner.settings.state.collectAsStateWithLifecycle()
     val repository by owner.repository.state.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var viewport by remember { mutableStateOf(GraphViewport()) }
-    val modalOpen = when (tab) { 0 -> tree.form != null || tree.isAddMenuExpanded; 1 -> find.form != null; else -> settings.page != null }
+    LaunchedEffect(sharing.openRequest) { if (sharing.openRequest > 0) tab = 1 }
+    val modalOpen = when (tab) { 0 -> tree.form != null || tree.isAddMenuExpanded || tree.deleteNodeId != null; 1 -> sharing.draft != null; 2 -> settings.page != null; else -> false }
     BackHandler(modalOpen || tab != 0) {
         when {
             modalOpen && tab == 0 -> owner.tree.dismiss()
-            modalOpen && tab == 1 -> owner.find.dismiss()
+            modalOpen && tab == 1 -> owner.sharing.dismiss()
             modalOpen -> owner.settings.open(null)
             else -> tab = 0
         }
@@ -53,16 +57,17 @@ import com.app.familytree.feature.settings.*
     }
     Scaffold(containerColor = Beige, bottomBar = {
         NavigationBar(containerColor = Beige) {
-            val labels = listOf("My Tree", "Find Others", "Settings")
-            val icons = listOf(Icons.Outlined.AccountTree, Icons.Outlined.Search, Icons.Outlined.Settings)
+            val labels = listOf("My Tree", "Sharing", "Settings", "Logs")
+            val icons = listOf(Icons.Outlined.AccountTree, Icons.Outlined.QrCode, Icons.Outlined.Settings, Icons.Outlined.History)
             labels.forEachIndexed { index, label -> NavigationBarItem(selected = tab == index, onClick = { tab = index }, icon = { Icon(icons[index], null) }, label = { Text(label) }, colors = NavigationBarItemDefaults.colors(indicatorColor = Beige, selectedIconColor = Espresso, selectedTextColor = Espresso, unselectedIconColor = WarmGrey, unselectedTextColor = WarmGrey)) }
         }
     }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
             when (tab) {
-                0 -> TreeScreen(tree, viewport, { pan, zoom -> viewport = viewport.copy(zoom = (viewport.zoom * zoom).coerceIn(0.5f, 8f), pan = viewport.pan + pan) }, { viewport = GraphViewport() }, owner.tree::select, owner.tree::toggleMenu, owner.tree::dismiss, owner.tree::startAdd, owner.tree::editForm, owner.tree::save, owner.tree::retry)
-                1 -> FindOthersScreen(find, owner.find::search, owner.find::connect, owner.find::choose, owner.find::save, owner.find::dismiss)
+                0 -> TreeScreen(tree, viewport, { pan, zoom -> viewport = viewport.copy(zoom = (viewport.zoom * zoom).coerceIn(0.5f, 8f), pan = viewport.pan + pan) }, { viewport = GraphViewport() }, owner.tree::select, owner.tree::toggleMenu, owner.tree::dismiss, owner.tree::startAdd, owner.tree::editForm, owner.tree::save, owner.tree::retry, owner.tree::requestDelete, owner.tree::confirmDelete)
+                1 -> SharingScreen(sharing, owner.sharing::input, owner.sharing::createLink, onShare, onScan, { owner.sharing.receive() }, owner.sharing::revoke, owner.sharing::options, owner.sharing::match, owner.sharing::preview, owner.sharing::importTree, owner.sharing::dismiss, owner.sharing::sync, owner.sharing::checkUpdates, owner.sharing::disconnect) { ShareQr(it) }
                 2 -> SettingsScreen(settings, owner.settings::open, owner.settings::editProfile, owner.settings::saveProfile, owner.settings::privacy, owner.settings::notifications, { owner.settings.session(false) })
+                3 -> LogsScreen(logs, owner.logs::review)
             }
         }
     }

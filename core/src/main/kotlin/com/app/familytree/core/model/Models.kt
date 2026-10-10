@@ -13,5 +13,5 @@ data class TreeGraph(val nodes: List<TreeNode>, val descentLines: List<Pair<Stri
 data class SearchResult(val person: Person, val isConnected: Boolean)
 @Serializable data class AppSettings(val isPrivate: Boolean = true, val discoverable: Boolean = false, val notifications: Boolean = true)
 @Serializable data class Session(val signedIn: Boolean = true)
-@Serializable data class AppData(val version: Int = 1, val tree: FamilyTree, val connectedUserIds: Set<String> = emptySet(), val settings: AppSettings = AppSettings(), val session: Session = Session())
+@Serializable data class AppData(val version: Int = 2, val tree: FamilyTree, val connectedUserIds: Set<String> = emptySet(), val settings: AppSettings = AppSettings(), val session: Session = Session(), val treeId: String = "", val shareToken: String? = null, val syncLinks: List<SyncLink> = emptyList(), val logs: List<ChangeLog> = emptyList())
 data class RelationForm(val anchorId: String, val type: RelationshipType = RelationshipType.CHILD, val existingPerson: Person? = null, val name: String = "", val avatarUrl: String = "", val year: String = "", val error: String? = null, val saving: Boolean = false)

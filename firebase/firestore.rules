@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sharedTrees/{token} {
+      // A 128-bit random link is a read capability; collection enumeration is prohibited.
+      allow get: if request.auth != null && (!exists(/databases/$(database)/documents/sharedTrees/$(token)) || resource.data.enabled == true || resource.data.ownerUid == request.auth.uid);
+      allow list: if false;
+      allow create: if request.auth != null && token.matches('[a-f0-9]{32}')
+        && request.resource.data.ownerUid == request.auth.uid
+        && validDocument() && request.resource.data.revision == 1;
+      allow update: if request.auth != null && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.treeId == resource.data.treeId
+        && validDocument()
+        && ((request.resource.data.diff(resource.data).affectedKeys().hasOnly(['enabled', 'updatedAt'])
+          && request.resource.data.revision == resource.data.revision)
+          || request.resource.data.revision == resource.data.revision + 1);
+      allow delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      function validDocument() {
+        return request.resource.data.keys().hasOnly(['ownerUid', 'treeId', 'payload', 'revision', 'enabled', 'updatedAt'])
+          && request.resource.data.ownerUid is string && request.resource.data.treeId is string
+          && request.resource.data.payload is string && request.resource.data.payload.size() <= 700000
+          && request.resource.data.revision is int && request.resource.data.enabled is bool
+          && request.resource.data.updatedAt == request.time;
+      }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

@@ -49,14 +49,13 @@ import com.app.familytree.core.theme.*
                         }
                         SettingsPage.PRIVACY -> {
                             Text("Privacy & Security", style = MaterialTheme.typography.headlineMedium)
-                            Text("Local demo preferences. Your tree is stored on this device; no online sharing or access enforcement is enabled.", color = WarmGrey)
+                            Text("Your tree is saved on this device. Creating a sharing link uploads it; anyone holding that link can view it until you revoke it in Sharing.", color = WarmGrey)
                             ToggleRow("Private tree", state.settings.isPrivate, !state.saving) { onPrivacy(it, state.settings.discoverable) }
-                            ToggleRow("Discoverable profile", state.settings.discoverable, !state.saving) { onPrivacy(state.settings.isPrivate, it) }
                         }
                         SettingsPage.ACCESS -> {
                             Text("Tree Access", style = MaterialTheme.typography.headlineMedium)
-                            Text("Demo tree code: ${state.treeCode}", style = MaterialTheme.typography.titleMedium)
-                            Text("Use this code in Find Others. This local member list does not grant online access.", color = WarmGrey)
+                            Text("Family members", style = MaterialTheme.typography.titleMedium)
+                            Text("Manage share links and linked trees in Sharing. This list shows relatives, not online access permissions.", color = WarmGrey)
                             state.people.forEach { person -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { Avatar(person, Modifier.size(40.dp)); Text(person.name) } }
                         }
                         SettingsPage.NOTIFICATIONS -> {
